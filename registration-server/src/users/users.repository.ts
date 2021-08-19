@@ -1,10 +1,10 @@
+import { HttpException, HttpStatus } from '@nestjs/common';
 import {
   ConflictException,
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { error } from 'node:console';
-import { EntityRepository, Repository, UpdateResult } from 'typeorm';
+import { EntityRepository, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -53,14 +53,33 @@ export class UserRepository extends Repository<User> {
       user.password = user.password || updateUser.password;
       user.updatedAt = new Date();
       return user.save();
+    } else {
+      throw new HttpException(
+        {
+          status: HttpStatus.NO_CONTENT,
+          error: 'User not found!',
+        },
+        HttpStatus.NO_CONTENT,
+      );
     }
-
-    return null;
   }
 
-  async login(login: LoginDto) {
-    return this.createQueryBuilder('user')
-      .where('user.email = :email and user.password = :password', login)
+  async login(loginToken: string): Promise<User> {
+    const decoded = Buffer.from(loginToken, 'base64').toString();
+    const email = decoded.split(':')[0];
+    const password = decoded.split(':')[1];
+
+    const user = await this.createQueryBuilder('user')
+      .where('user.email = :email and user.password = :password', {
+        email: email,
+        password: password,
+      })
       .getOne();
+
+    if (!user) {
+      throw new UnauthorizedException('Username and/or password incorrect');
+    }
+
+    return user;
   }
 }

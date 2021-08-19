@@ -1,3 +1,4 @@
+import { Header, Headers, HttpCode } from '@nestjs/common';
 import {
   Controller,
   Post,
@@ -7,8 +8,7 @@ import {
   UseGuards,
   Patch,
 } from '@nestjs/common';
-import { AuthGuard } from 'src/helpers/auth.guard';
-import { EditGuard } from 'src/helpers/edit.guard';
+import { PermissionGuard } from 'src/helpers/permission.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -16,7 +16,7 @@ import { UserDto } from './dto/user.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
-@UseGuards(AuthGuard)
+@UseGuards(PermissionGuard)
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
@@ -36,13 +36,13 @@ export class UsersController {
   }
 
   @Patch()
-  @UseGuards(EditGuard)
   async updateUser(@Body() updateUser: UpdateUserDto): Promise<UpdateUserDto> {
     return this.usersService.updateUser(updateUser);
   }
 
   @Post('/login')
-  async login(@Body() login: LoginDto): Promise<UserDto> {
-    return this.usersService.login(login);
+  @HttpCode(200)
+  async login(@Headers('authorization') loginToken: string): Promise<LoginDto> {
+    return this.usersService.login(loginToken);
   }
 }

@@ -1,17 +1,10 @@
-import {
-  HttpStatus,
-  Injectable,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRepository } from './users.repository';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserDto } from './dto/user.dto';
 import { User } from './user.entity';
-import { LoginDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { EntityNotFoundError } from 'typeorm';
-import { HttpException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -69,34 +62,17 @@ export class UsersService {
 
   async getUserByEmail(searchParam: string): Promise<UserDto> {
     const user: User = await this.userRepository.getUserByEmail(searchParam);
-    return user ? UserDto.fromEntity(user) : null;
+    return UserDto.fromEntity(user);
   }
 
   async updateUser(updateUser: UpdateUserDto): Promise<UserDto> {
     const user = await this.userRepository.updateUser(updateUser);
-
-    if (user) {
-      return UserDto.fromEntity(user);
-    }
-
-    throw new HttpException(
-      {
-        status: HttpStatus.NO_CONTENT,
-        error: 'User not found!',
-      },
-      HttpStatus.NO_CONTENT,
-    );
+    return UserDto.fromEntity(user);
   }
 
-  async login(login: LoginDto): Promise<UserDto> {
-    const user: User = await this.userRepository.login(login);
-
-    if (!user) {
-      throw new UnprocessableEntityException(
-        'Username and/or password incorrect',
-      );
-    } else {
-      return UserDto.fromEntity(user);
-    }
+  async login(loginToken: string): Promise<UserDto> {
+    loginToken = loginToken.replace(/Basic /, '');
+    const user: User = await this.userRepository.login(loginToken);
+    return UserDto.fromEntity(user);
   }
 }
