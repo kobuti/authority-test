@@ -1,6 +1,7 @@
 import {
   ConflictException,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { error } from 'node:console';
 import { EntityRepository, Repository, UpdateResult } from 'typeorm';
@@ -42,23 +43,19 @@ export class UserRepository extends Repository<User> {
       .getOne();
   }
 
-  async updateUser(
-    email: string,
-    pass: string,
-    updateUser: UpdateUserDto,
-  ): Promise<User> {
+  async updateUser(updateUser: UpdateUserDto): Promise<User> {
     const user = await this.createQueryBuilder('user')
-      .where('user.email = :email and user.password = :pass', { email, pass })
+      .where('user.email = :email', { email: updateUser.email })
       .getOne();
 
     if (user) {
-      user.name = updateUser.name;
-      user.password = updateUser.password;
+      user.name = updateUser.name || user.name;
+      user.password = user.password || updateUser.password;
       user.updatedAt = new Date();
       return user.save();
-    } else {
-      throw new Error("You cannot update another person's user.");
     }
+
+    return null;
   }
 
   async login(login: LoginDto) {
