@@ -1,28 +1,28 @@
-import { useState } from 'react';
-import { ZipcodeService } from '../api/zip.code.service';
+import { MutableRefObject, useRef, useState } from 'react';
+import { Zipcode, ZipcodeService } from '../api/zip.code.service';
 import { User, UserService } from '../api/user.service';
+import setProp from 'nested-property';
 
 const Register = () => {
+  const inputZipcode = useRef<HTMLInputElement>() as MutableRefObject<HTMLInputElement>;
+  const inputStreetAddress = useRef<HTMLInputElement>() as MutableRefObject<HTMLInputElement>;
+  const inputNeighborhood = useRef<HTMLInputElement>() as MutableRefObject<HTMLInputElement>;
+  const inputCity = useRef<HTMLInputElement>() as MutableRefObject<HTMLInputElement>;
+  const inputState = useRef<HTMLInputElement>() as MutableRefObject<HTMLInputElement>;
+  
   const [registrationObject, setRegistrationObject] = useState(new User({}));
-  const [buildNumber, setBuildNumber] = useState('');
 
   const handleInputChange = (e: any) => {
-    e.preventDefault();
+    typeof e.preventDefault === 'string' && e.preventDefault();
     
-    let value = e.target.value;
-
-    if (e.target.name === 'zipcode' && !/^[0-9]*$/gm.test(e.target.value)) {
-      const previousValue = registrationObject["userAddress"];
-      
-      if (previousValue != null)  {
-        value = previousValue.zipCode;
-      }
+    if (e.target.name === 'userAddress.zipCode') {
+      e.target.value = e.target.value.replace(/[^\d]/gm, '');
     }
     
-    setRegistrationObject(inputs => ({
-      ...inputs, 
-      [e.target.name]: value
-    }));
+    setRegistrationObject((inputs: User) => {
+      setProp.set(inputs, e.target.name, e.target.value)
+      return inputs;
+    });
   }
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -42,7 +42,7 @@ const Register = () => {
       }
       
     } catch(e) {
-      setErrorMessage(e.response.data.message);
+      setErrorMessage(e.response?.data?.message);
     }
   }
 
@@ -56,8 +56,17 @@ const Register = () => {
       const service = new ZipcodeService();
 
       service.getZipcode(e.target.value)
-        .then(result => {
-          handleRegister(result);
+        .then((result: Zipcode) => {
+          inputZipcode.current.value = result.zipCode;
+          handleInputChange({ target: inputZipcode.current });
+          inputStreetAddress.current.value = result.streetAddress;
+          handleInputChange({ target: inputStreetAddress.current });
+          inputNeighborhood.current.value = result.neighborhood;
+          handleInputChange({ target: inputNeighborhood.current });
+          inputCity.current.value = result.city;
+          handleInputChange({ target: inputCity.current });
+          inputState.current.value = result.state;
+          handleInputChange({ target: inputState.current });
         });
     }
   }
@@ -70,7 +79,8 @@ const Register = () => {
           (<form onSubmit={handleRegister}>
             <label>
               <p>Name</p>
-              <input required type="text" name='name' onChange={handleInputChange}/>
+              <input required type="text" name='name'
+                     onChange={handleInputChange}/>
             </label>
             <label>
               <p>E-mail</p>
@@ -78,31 +88,38 @@ const Register = () => {
             </label>
             <label>
               <p>Zip code</p>
-              <input required type="text" value={registrationObject?.userAddress?.zipCode} name='zipCode' onChange={handleInputChange}
-                                 onBlur={lookupAddress}
-                                 maxLength={8}
-                                 minLength={8}
-                                 />
+              <input required type="text" value={registrationObject?.userAddress?.zipCode} 
+                              ref={inputZipcode}
+                              name='userAddress.zipCode' 
+                              onChange={handleInputChange}
+                              onBlur={lookupAddress}
+                              maxLength={8}
+                              minLength={8}/>
             </label>
             <label>
               <p>Street Address</p>
-              <input type="text" value={registrationObject?.userAddress?.streetAddress}/>
+              <input type="text" name='userAddress.streetAddress' ref={inputStreetAddress}
+                     value={registrationObject?.userAddress?.streetAddress}/>
             </label>
             <label>
               <p>Build no</p>
-              <input required type="text" onChange={e => setBuildNumber(e.target.value)}/>
+              <input required type="text" name='userAddress.buildNumber'
+                     onChange={handleInputChange}/>
             </label>
             <label>
               <p>Neighborhood</p>
-              <input type="text" value={registrationObject?.userAddress?.neighborhood}/>
+              <input type="text" name='userAddress.neighborhood' ref={inputNeighborhood}
+                     value={registrationObject?.userAddress?.neighborhood}/>
             </label>
             <label>
               <p>City</p>
-              <input type="text" value={registrationObject?.userAddress?.city}/>
+              <input type="text" name='userAddress.city' ref={inputCity}
+                     value={registrationObject?.userAddress?.city}/>
             </label>
             <label>
               <p>State</p>
-              <input type="text" value={registrationObject?.userAddress?.state}/>
+              <input type="text" name='userAddress.state' ref={inputState}
+                     value={registrationObject?.userAddress?.state}/>
             </label>
             
             <label>

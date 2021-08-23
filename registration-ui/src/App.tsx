@@ -5,6 +5,7 @@ import ListUsers from './components/ListUsers';
 import EditUser from './components/EditUser';
 import Login from './components/Login';
 import Register from './components/Register';
+import { Config } from './configs/config';
 
 const setToken = (token: string): void => {
   sessionStorage.setItem('token', token);
@@ -21,7 +22,7 @@ const App = () => {
 
   const setLogged = (logged: boolean) => {
     if (logged)
-      window.location.href = '/users';
+      window.location.href = `/users`;
   }
 
   const unsetToken = () => {
@@ -40,7 +41,6 @@ const App = () => {
       <BrowserRouter>
         <ul>
           <li><Link to='/users'>List of users registered</Link></li>
-          <li><Link to='/users/edit'>Edit your info</Link></li>
           <li><Link to='#' onClick={unsetToken}>Logout</Link></li>
         </ul>
         

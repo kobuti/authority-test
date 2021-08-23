@@ -15,7 +15,7 @@ import { UserAddress } from './user.address.entity';
 @Unique(['email'])
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  userId: string;
 
   @Column({ nullable: false, type: 'varchar', length: 50 })
   email: string;
@@ -32,7 +32,9 @@ export class User extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne(() => UserAddress)
+  @OneToOne(() => UserAddress, (user) => user.user, {
+    cascade: true,
+  })
   @JoinColumn()
   userAddress: UserAddress;
 }

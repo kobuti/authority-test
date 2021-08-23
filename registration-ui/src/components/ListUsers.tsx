@@ -10,7 +10,7 @@ interface Props {
 const ListUsers: FC<Props> = ({ userToken }) => {
   const columns = [{
     header: 'Id',
-    property: 'id'
+    property: 'userId'
   }, {
     header: 'Name',
     property: 'name'

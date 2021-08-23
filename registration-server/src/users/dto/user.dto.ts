@@ -4,7 +4,7 @@ import { UserAddressDto } from './user.address.dto';
 @Exclude()
 export class UserDto {
   @Expose()
-  id: string;
+  userId: string;
 
   @Expose()
   email: string;

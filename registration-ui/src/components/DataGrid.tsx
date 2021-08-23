@@ -1,4 +1,4 @@
-import React, { useState, FC } from 'react';
+import React, { FC } from 'react';
 import PropTypes from 'prop-types';
 import { Column } from './interfaces/column';
 
@@ -35,13 +35,13 @@ const DataGrid: FC<Props> = ({ columns, dataSource }) => {
         <tbody>
             { 
                 dataSource.map(row => (
-                    <tr key={row["id"]}>
+                    <tr key={row["userId"]}>
                         {
                             columns.map(col => (
-                                col.property === 'id' ? (
-                                    <td key={row['id'] + row[col.property]}><a href={`/users/edit/${row[col.property]}`}>{row[col.property]}</a></td> 
+                                col.property === 'userId' ? (
+                                    <td key={row['userId'] + row[col.property]}><a href={`/users/edit/${row[col.property]}`}>{row[col.property]}</a></td> 
                                 ) : (
-                                    <td key={row['id'] + row[col.property]}>{row[col.property]}</td> 
+                                    <td key={row['userId'] + row[col.property]}>{row[col.property]}</td> 
                                 )
                             ))
                         }

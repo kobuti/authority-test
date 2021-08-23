@@ -1,5 +1,5 @@
 export class UserAddressDto {
-  id: string;
+  userAddressId: string;
 
   zipCode: string;
 

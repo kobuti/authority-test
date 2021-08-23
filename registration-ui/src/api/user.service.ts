@@ -1,6 +1,8 @@
 import axios from "axios";
+import { Config } from '../configs/config';
 
 export class UserAddress {
+  userAddressId: string | undefined;
   zipCode: string | undefined;
   streetAddress: string | undefined;
   buildNumber: string | undefined;
@@ -13,7 +15,7 @@ export class UserAddress {
   }
 }
 export class User {
-    id: string | undefined;
+    userId: string | undefined;
     name: string | undefined;
     email: string | undefined
     password: string | undefined
@@ -32,7 +34,7 @@ export class User {
 export class UserService {
   async getUsers(token: string): Promise<User[]> {
       try {
-        const { data } = await axios.get(`http://localhost:8081/users/`, {
+        const { data } = await axios.get(`${Config.baseUrl}/users/`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Basic ${token}`
@@ -47,7 +49,7 @@ export class UserService {
 
   async getUser(token: string, email: string): Promise<User> {
     try {
-        const { data } = await axios.get(`http://localhost:8081/users/${email}`, {
+        const { data } = await axios.get(`${Config.baseUrl}/users/${email}`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Basic ${token}`
@@ -67,7 +69,7 @@ export class UserService {
   async createUser(user: User) {
 
     if (this.validatePassword(user)) {
-      const { data } = await axios.post('http://localhost:8081/users', user, {
+      const { data } = await axios.post(`${Config.baseUrl}/users`, user, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -79,10 +81,11 @@ export class UserService {
     }
   }
 
-  async editUser(user: User) {
-    const { data } = await axios.patch(`http://localhost:8081/users/${user.email}`, user, {
+  async updateUser(userToken: string, user: User) {
+    const { data } = await axios.patch(`${Config.baseUrl}/users`, user, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${userToken}`
         }
       });
 

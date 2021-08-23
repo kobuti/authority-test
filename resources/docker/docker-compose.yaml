@@ -2,13 +2,13 @@ version: "3"
 
 services:
   pgsql:
-    image: postgres:alpine
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "5432:5432"
     container_name: "pgsql"
     restart: always
-    volumes:
-      - /home/kobuti/pg/data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: pguser
       POSTGRES_PASSWORD: pgpassword
@@ -16,8 +16,7 @@ services:
   adminer:
     image: adminer
     restart: always
+    depends_on:
+      - pqsql
     ports:
       - 8080:8080
-
-volumes:
-  pg-data:

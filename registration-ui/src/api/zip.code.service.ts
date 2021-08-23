@@ -1,12 +1,15 @@
 import axios from "axios";
+import { Config } from '../configs/config';
 
 export class Zipcode {
+  zipCode: string;
   streetAddress: string;
   neighborhood: string;
   city: string;
   state: string;
 
   constructor(partial: Partial<Zipcode>) {
+    this.zipCode = '';
     this.streetAddress = '';
     this.neighborhood = '';
     this.city = '';
@@ -18,7 +21,7 @@ export class Zipcode {
 export class ZipcodeService {
     async getZipcode(zipCode: string): Promise<Zipcode> {
         try {
-            const { data } = await axios.get(`http://localhost:8081/zipcode/${zipCode}`, {
+            const { data } = await axios.get(`${Config.baseUrl}/zipcode/${zipCode}`, {
               headers: {
                 'Content-Type': 'application/json'
               }

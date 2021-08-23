@@ -1,0 +1,2 @@
+CREATE DATABASE authority;
+GRANT ALL PRIVILEGES ON DATABASE authority TO pguser;

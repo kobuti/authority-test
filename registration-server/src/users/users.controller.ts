@@ -38,15 +38,13 @@ export class UsersController {
   }
 
   @Patch()
-  async updateUser(@Body() updateUser: Partial<UserDto>): Promise<UserDto> {
+  async updateUser(@Body() updateUser: UserDto): Promise<UserDto> {
     return this.usersService.updateUser(updateUser);
   }
 
   @Post('/login')
   @HttpCode(200)
   async login(@Headers('authorization') loginToken: string): Promise<LoginDto> {
-    const user = await this.usersService.login(loginToken);
-
-    return user;
+    return this.usersService.login(loginToken);
   }
 }

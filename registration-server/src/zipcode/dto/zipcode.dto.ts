@@ -1,7 +1,8 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 
 export class ZipcodeDto {
-  @Expose({ name: 'zipcode' })
+  @Expose({ name: 'zipCode' })
+  @Transform((obj) => obj.value.replace('-', ''))
   cep: string;
 
   @Expose({ name: 'streetAddress' })

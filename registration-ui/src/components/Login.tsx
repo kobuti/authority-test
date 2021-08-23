@@ -1,4 +1,5 @@
 import { useState, FC } from 'react';
+import { Config } from '../configs/config';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 
@@ -19,7 +20,7 @@ const Login: FC<IProps> = ({ setToken, shouldRedirect }) => {
     e.preventDefault();
     try {
       const authToken = Buffer.from(`${email}:${password}`).toString('base64');
-      const { data } = await axios.post('http://localhost:8081/users/login', null, {
+      const { data } = await axios.post(`${Config.baseUrl}/users/login`, null, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Basic ${authToken}`
@@ -29,7 +30,7 @@ const Login: FC<IProps> = ({ setToken, shouldRedirect }) => {
       setToken(data.token);
       shouldRedirect(true);
     } catch(e) {
-      setErrorMessage(e.response.data.message);
+      setErrorMessage(e.response?.data?.error || e.reponse?.data?.message);
     }
   }
 

@@ -3,14 +3,17 @@ import { ZipcodeService } from '../api/zip.code.service';
 import { User, UserService } from '../api/user.service';
 import PropTypes from 'prop-types';
 import { useRouteMatch } from 'react-router-dom';
+import setProp from 'nested-property';
+import { Config } from '../configs/config';
 
 interface Props {
   userToken: string
 }
 
-const EditUser: FC<Props> = ({ userToken }) => {
+const EditUser: FC<Props> = ({ userToken }) => {  
   const service = new UserService();
   const match: any = useRouteMatch("/users/edit/:id");
+  const [finished, setFinished] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [editingObject, setEditingObject] = useState(new User({}));
 
@@ -18,40 +21,44 @@ const EditUser: FC<Props> = ({ userToken }) => {
     service.getUser(userToken, String(match?.params.id))
       .then(result => {
         setEditingObject(result);
+        setFinished(true);
       });
   }
 
-  useEffect(() => getUser(), [editingObject.name]);
-
- 
-  const [buildNumber, setBuildNumber] = useState('');
+  useEffect(() => getUser(), [finished]);
 
   const handleInputChange = (e: any) => {
     e.preventDefault();
     
-    let value = e.target.value;
-
-    if (e.target.name === 'zipcode' && !/^[0-9]*$/gm.test(e.target.value)) {
-      const previousValue = editingObject["userAddress"];
-
-      if (previousValue != null)
-      value = previousValue.zipCode;
+    if (e.target.name === 'userAddress.zipCode') {
+      e.target.value = e.target.value.replace(/[^\d]/gm, '');
     }
     
-    setEditingObject(inputs => ({
-      ...inputs, 
-      [e.target.name]: value
-    }));
+    setEditingObject((inputs: User) => {
+      setProp.set(inputs, e.target.name, e.target.value);
+      return {
+        ...inputs
+      };
+    });
   }
 
   const lookupAddress = async (e: any) => {
     if (/^[0-9]*$/gm.test(e.target.value)) {
 
         const service = new ZipcodeService();
-
+        
         service.getZipcode(e.target.value)
           .then(result => {
-            handleInputChange(result);
+            
+            const newObj = { ...editingObject};
+        
+            newObj.userAddress = {
+              ...result,
+              userAddressId: newObj.userAddress?.userAddressId,
+              buildNumber: ''
+            };
+
+            setEditingObject(newObj);
           });
     }
   }
@@ -60,18 +67,11 @@ const EditUser: FC<Props> = ({ userToken }) => {
     e.preventDefault();
     try {
       const service = new UserService();
-      const [data, error] = await service.editUser({
-        ...editingObject
-      });
+      await service.updateUser(userToken, editingObject);
       
-      if (!error) {
-        window.location.href = '/users'
-      } else {
-        setErrorMessage(error);
-      }
-      
+      window.location.href = `/users`;
     } catch(e) {
-      setErrorMessage(e.response.data.message);
+      setErrorMessage(e.response?.data?.message);
     }
   }
 
@@ -86,8 +86,8 @@ const EditUser: FC<Props> = ({ userToken }) => {
         <label>
           <p>Name</p>
           <input required type="text" name='name'
-                 readOnly={true}
-                 value={editingObject.name} onChange={handleInputChange}/>
+                 value={editingObject.name}
+                 onChange={handleInputChange}/>
         </label>
         <label>
           <p>E-mail</p>
@@ -96,40 +96,47 @@ const EditUser: FC<Props> = ({ userToken }) => {
         </label>
         <label>
           <p>Zip code</p>
-          <input required type="text" name='zipcode' value={editingObject?.userAddress?.zipCode}
-                              onChange={handleInputChange}
-                              onBlur={lookupAddress}
-                              maxLength={8}
-                              minLength={8}/>
+          <input required type="text" name='userAddress.zipCode' 
+                          value={editingObject?.userAddress?.zipCode}
+                          onChange={handleInputChange}
+                          onBlur={lookupAddress}
+                          maxLength={8}
+                          minLength={8}/>
         </label>
         <label>
           <p>Street Address</p>
-          <input type="text" value={editingObject?.userAddress?.streetAddress}/>
+          <input type="text" name="userAddress.streetAddress"
+                 value={editingObject?.userAddress?.streetAddress}/>
         </label>
         <label>
           <p>Build no</p>
-          <input required type="text" onChange={e => setBuildNumber(e.target.value)}/>
+          <input required type="text" name="userAddress.buildNumber"
+                 value={editingObject?.userAddress?.buildNumber}
+                 onChange={handleInputChange}/>
         </label>
         <label>
           <p>Neighborhood</p>
-          <input type="text" value={editingObject?.userAddress?.neighborhood}/>
+          <input type="text" name="userAddress.neighborhood"
+                 value={editingObject?.userAddress?.neighborhood}/>
         </label>
         <label>
           <p>City</p>
-          <input type="text" value={editingObject?.userAddress?.city}/>
+          <input type="text" name="userAddress.city"
+                 value={editingObject?.userAddress?.city}/>
         </label>
         <label>
           <p>State</p>
-          <input type="text" value={editingObject.userAddress?.state}/>
+          <input type="text"  name="userAddress.state"
+                 value={editingObject.userAddress?.state}/>
         </label>
         
         <label>
           <p>Password</p>
-          <input required type="password" name='password' onChange={handleInputChange}/>
+          <input type="password" name='password' onChange={handleInputChange}/>
         </label>
         <label>
           <p>Password Confirmation</p>
-          <input required type="password" name='passwordConfirmation' onChange={handleInputChange}/>
+          <input type="password" name='passwordConfirmation' onChange={handleInputChange}/>
         </label>
         <div>
           <button type="submit">Submit</button>
