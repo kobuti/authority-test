@@ -1,4 +1,5 @@
-import { Header, Headers, HttpCode } from '@nestjs/common';
+import { ClassSerializerInterceptor, Headers, HttpCode } from '@nestjs/common';
+import { UseInterceptors } from '@nestjs/common';
 import {
   Controller,
   Post,
@@ -8,15 +9,14 @@ import {
   UseGuards,
   Patch,
 } from '@nestjs/common';
-import { PermissionGuard } from 'src/helpers/permission.guard';
-import { CreateUserDto } from './dto/create-user.dto';
+import { PermissionGuard } from 'src/annotations/permission.guard';
 import { LoginDto } from './dto/login.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
 @UseGuards(PermissionGuard)
+@UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
@@ -25,24 +25,28 @@ export class UsersController {
     return this.usersService.getUsers();
   }
 
-  @Get('/:email')
-  async getUserByEmail(@Param('email') email: string): Promise<UserDto> {
-    return this.usersService.getUserByEmail(email);
+  @Get('/:searchParam')
+  async getUserByEmail(
+    @Param('searchParam') searchParam: string,
+  ): Promise<UserDto> {
+    return this.usersService.getUser(searchParam);
   }
 
   @Post()
-  async createUser(@Body() createUserDto: CreateUserDto): Promise<UserDto> {
+  async createUser(@Body() createUserDto: UserDto): Promise<UserDto> {
     return this.usersService.createUser(createUserDto);
   }
 
   @Patch()
-  async updateUser(@Body() updateUser: UpdateUserDto): Promise<UpdateUserDto> {
+  async updateUser(@Body() updateUser: Partial<UserDto>): Promise<UserDto> {
     return this.usersService.updateUser(updateUser);
   }
 
   @Post('/login')
   @HttpCode(200)
   async login(@Headers('authorization') loginToken: string): Promise<LoginDto> {
-    return this.usersService.login(loginToken);
+    const user = await this.usersService.login(loginToken);
+
+    return user;
   }
 }

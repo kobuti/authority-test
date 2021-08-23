@@ -5,19 +5,29 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { EntityRepository, Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
-import { LoginDto } from './dto/login.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
+import { UserAddress } from './user.address.entity';
 import { User } from './user.entity';
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
-  async createUser(userDto: CreateUserDto): Promise<User> {
+  async createUser(userDto: UserDto): Promise<User> {
     try {
+      const userAddress = new UserAddress();
+      userAddress.zipCode = userDto.userAddress.zipCode;
+      userAddress.streetAddress = userDto.userAddress.streetAddress;
+      userAddress.buildNumber = userDto.userAddress.buildNumber;
+      userAddress.neighborhood = userDto.userAddress.neighborhood;
+      userAddress.city = userDto.userAddress.city;
+      userAddress.state = userDto.userAddress.state;
+
+      await userAddress.save();
+
       const user = this.create();
       user.name = userDto.name;
       user.password = userDto.password;
       user.email = userDto.email;
+      user.userAddress = userAddress;
 
       await user.save();
 
@@ -37,13 +47,22 @@ export class UserRepository extends Repository<User> {
     return this.createQueryBuilder('user').getMany();
   }
 
-  async getUserByEmail(email: string): Promise<User> {
+  async getUser(searchParams: any): Promise<User> {
+    let whereClause = '';
+
+    if (searchParams.id) {
+      whereClause = 'user.id = :id';
+    } else {
+      whereClause = 'user.email = :email';
+    }
+
     return this.createQueryBuilder('user')
-      .where('user.email = :email', { email })
+      .innerJoinAndSelect('user.userAddress', 'userAddress')
+      .where(whereClause, searchParams)
       .getOne();
   }
 
-  async updateUser(updateUser: UpdateUserDto): Promise<User> {
+  async updateUser(updateUser: Partial<UserDto>): Promise<User> {
     const user = await this.createQueryBuilder('user')
       .where('user.email = :email', { email: updateUser.email })
       .getOne();

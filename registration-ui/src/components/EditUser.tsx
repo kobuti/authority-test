@@ -1,90 +1,141 @@
-import React, { useState, FC } from 'react';
+import { useState, FC, useEffect } from 'react';
+import { ZipcodeService } from '../api/zip.code.service';
+import { User, UserService } from '../api/user.service';
 import PropTypes from 'prop-types';
-import axios from 'axios';
+import { useRouteMatch } from 'react-router-dom';
 
 interface Props {
   userToken: string
 }
 
-const EditUser: FC<Props> = (userToken) => {
+const EditUser: FC<Props> = ({ userToken }) => {
+  const service = new UserService();
+  const match: any = useRouteMatch("/users/edit/:id");
   const [errorMessage, setErrorMessage] = useState('');
+  const [editingObject, setEditingObject] = useState(new User({}));
 
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  
-  const handleEdit = async (e: any) => {
+  const getUser = () => {
+    service.getUser(userToken, String(match?.params.id))
+      .then(result => {
+        setEditingObject(result);
+      });
+  }
+
+  useEffect(() => getUser(), [editingObject.name]);
+
+ 
+  const [buildNumber, setBuildNumber] = useState('');
+
+  const handleInputChange = (e: any) => {
+    e.preventDefault();
+    
+    let value = e.target.value;
+
+    if (e.target.name === 'zipcode' && !/^[0-9]*$/gm.test(e.target.value)) {
+      const previousValue = editingObject["userAddress"];
+
+      if (previousValue != null)
+      value = previousValue.zipCode;
+    }
+    
+    setEditingObject(inputs => ({
+      ...inputs, 
+      [e.target.name]: value
+    }));
+  }
+
+  const lookupAddress = async (e: any) => {
+    if (/^[0-9]*$/gm.test(e.target.value)) {
+
+        const service = new ZipcodeService();
+
+        service.getZipcode(e.target.value)
+          .then(result => {
+            handleInputChange(result);
+          });
+    }
+  }
+
+  const handleEditUser = async (e: any) => {
     e.preventDefault();
     try {
-      const { data } = await axios.patch('http://localhost:8081/users', {
-        name, password, passwordConfirmation
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${userToken}`
-        }
+      const service = new UserService();
+      const [data, error] = await service.editUser({
+        ...editingObject
       });
-
+      
+      if (!error) {
+        window.location.href = '/users'
+      } else {
+        setErrorMessage(error);
+      }
+      
     } catch(e) {
       setErrorMessage(e.response.data.message);
     }
   }
-
-  const getUser = async (userToken: string) => {
-    try {
-      const { data } = await axios.get('http://localhost:8081/users', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${userToken}`
-        }
-      });
-
-      setEmail(data.email);
-      setName(data.name);
-    } catch(e) {
-      setErrorMessage(e.response.data.message);
-    }
-  }
-
-  getUser(userToken.userToken);
 
   const errorStyle = {
     color: 'red'
   };
 
-  return(
-    <div className="login-wrapper">
-      <h2>Edit Personal Information</h2>
-      <form onSubmit={handleEdit}>
-        <label>
-          <p>E-mail</p> 
-          <input type="text" value={email} />
-        </label>
+  return(  
+    <div className="signup-wrapper">
+      <h2>Edit your information</h2>
+        <form onSubmit={handleEditUser}>
         <label>
           <p>Name</p>
-          <input type="text" onChange={e => setName(e.target.value)}/>
+          <input required type="text" name='name'
+                 readOnly={true}
+                 value={editingObject.name} onChange={handleInputChange}/>
         </label>
-        <div>
-          <br />
-          <hr/>
-          <b>Change your password</b>
-        </div>
+        <label>
+          <p>E-mail</p>
+          <input required type="text" name='email' value={editingObject.email}
+                 readOnly={true} />
+        </label>
+        <label>
+          <p>Zip code</p>
+          <input required type="text" name='zipcode' value={editingObject?.userAddress?.zipCode}
+                              onChange={handleInputChange}
+                              onBlur={lookupAddress}
+                              maxLength={8}
+                              minLength={8}/>
+        </label>
+        <label>
+          <p>Street Address</p>
+          <input type="text" value={editingObject?.userAddress?.streetAddress}/>
+        </label>
+        <label>
+          <p>Build no</p>
+          <input required type="text" onChange={e => setBuildNumber(e.target.value)}/>
+        </label>
+        <label>
+          <p>Neighborhood</p>
+          <input type="text" value={editingObject?.userAddress?.neighborhood}/>
+        </label>
+        <label>
+          <p>City</p>
+          <input type="text" value={editingObject?.userAddress?.city}/>
+        </label>
+        <label>
+          <p>State</p>
+          <input type="text" value={editingObject.userAddress?.state}/>
+        </label>
+        
         <label>
           <p>Password</p>
-          <input type="password" onChange={e => setPassword(e.target.value)}/>
+          <input required type="password" name='password' onChange={handleInputChange}/>
         </label>
         <label>
           <p>Password Confirmation</p>
-          <input type="password" onChange={e => setPasswordConfirmation(e.target.value)}/>
+          <input required type="password" name='passwordConfirmation' onChange={handleInputChange}/>
         </label>
         <div>
           <button type="submit">Submit</button>
         </div>
       </form>
-      {
-        errorMessage ? <div style={errorStyle}>{errorMessage}</div> : null
-      }
+      { errorMessage ? <div style={errorStyle}>{errorMessage}</div> : null }
     </div>
   );
 }

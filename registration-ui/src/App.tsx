@@ -1,11 +1,10 @@
 import './App.css';
 import { useState } from 'react';
-import { Route, Switch, BrowserRouter, Link, Router } from 'react-router-dom';
+import { Route, Switch, Link, BrowserRouter } from 'react-router-dom';
 import ListUsers from './components/ListUsers';
 import EditUser from './components/EditUser';
 import Login from './components/Login';
 import Register from './components/Register';
-import { history } from './history/browser.history';
 
 const setToken = (token: string): void => {
   sessionStorage.setItem('token', token);
@@ -22,33 +21,39 @@ const App = () => {
 
   const setLogged = (logged: boolean) => {
     if (logged)
-      history.push('/users')
+      window.location.href = '/users';
+  }
+
+  const unsetToken = () => {
+    sessionStorage.removeItem('token');
+    window.location.reload();
+  }
+
+  if (/\/register$/.test(window.location.href)) {
+    return <Register />
   }
 
   return !token ? (
     <Login setToken={setToken} shouldRedirect={setLogged}/>
   ) : (
     <div className="wrapper">
-      <Router history={history}>
+      <BrowserRouter>
         <ul>
           <li><Link to='/users'>List of users registered</Link></li>
           <li><Link to='/users/edit'>Edit your info</Link></li>
+          <li><Link to='#' onClick={unsetToken}>Logout</Link></li>
         </ul>
         
         <Switch>
           <Route exact path="/users">
             <ListUsers userToken={token}/>
           </Route>
-          <Route exact path="/users/edit">
+          <Route exact path="/users/edit/:id">
             <EditUser userToken={token}/>
           </Route>
-          <Route path="/register">
-            <Register />
-          </Route>
         </Switch>
-      </Router>
+      </BrowserRouter>
     </div>
   );
 }
-
 export default App;

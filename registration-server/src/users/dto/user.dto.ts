@@ -1,24 +1,32 @@
-import { User } from '../user.entity';
+import { Exclude, Expose, Type } from 'class-transformer';
+import { UserAddressDto } from './user.address.dto';
 
+@Exclude()
 export class UserDto {
+  @Expose()
+  id: string;
+
+  @Expose()
   email: string;
+
+  @Expose()
   name: string;
-  token: string;
+
+  @Expose()
   createdAt: Date;
+
+  @Expose()
   updatedAt: Date;
 
-  static fromEntity(dbUser: User): UserDto {
-    if (!dbUser) return;
+  @Expose()
+  @Type(() => UserAddressDto)
+  userAddress: UserAddressDto;
 
-    const user = new UserDto();
-    user.name = dbUser.name;
-    user.email = dbUser.email;
-    user.token = Buffer.from(`${dbUser.email}:${dbUser.password}`).toString(
-      'base64',
-    );
-    user.createdAt = dbUser.createdAt;
-    user.updatedAt = dbUser.updatedAt;
+  password: string;
 
-    return user;
+  passwordConfirmation: string;
+
+  constructor(partial: Partial<UserDto>) {
+    Object.assign(this, partial);
   }
 }

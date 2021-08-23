@@ -16,11 +16,13 @@ const Login: FC<IProps> = ({ setToken, shouldRedirect }) => {
   };
 
   const handleLogin = async (e: any) => {
-    //e.preventDefault();
+    e.preventDefault();
     try {
-      const { data } = await axios.post('http://localhost:8081/users/login', { email, password }, {
+      const authToken = Buffer.from(`${email}:${password}`).toString('base64');
+      const { data } = await axios.post('http://localhost:8081/users/login', null, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${authToken}`
         }
       });
 

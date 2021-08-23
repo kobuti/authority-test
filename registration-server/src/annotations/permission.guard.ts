@@ -15,6 +15,8 @@ export class PermissionGuard implements CanActivate {
     const headers = request.headers;
     if (/\/login/.test(request.url)) {
       return true;
+    } else if (/\/users/.test(request.url) && request.method == 'POST') {
+      return true;
     } else if (request.method == RequestMethod.PATCH) {
       const authorization = headers['authorization'].replace(/Basic /, '');
 

@@ -1,10 +1,9 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRepository } from './users.repository';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UserDto } from './dto/user.dto';
 import { User } from './user.entity';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class UsersService {
@@ -13,8 +12,8 @@ export class UsersService {
     private userRepository: UserRepository,
   ) {}
 
-  private validate(user: CreateUserDto) {
-    if (!this.validateEmail(user)) {
+  private validate(user: UserDto) {
+    if (!this.validateEmail(user.email)) {
       throw new UnprocessableEntityException('Invalid e-mail');
     }
 
@@ -39,40 +38,48 @@ export class UsersService {
     }
   }
 
-  private validateEmail(user: CreateUserDto) {
+  private validateEmail(email: string) {
     const re =
       /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(user.email.toLowerCase());
+    return re.test(email.toLowerCase());
   }
 
-  async createUser(createUser: CreateUserDto): Promise<UserDto> {
+  async createUser(createUser: UserDto): Promise<UserDto> {
     this.validate(createUser);
 
     const persistedUser = await this.userRepository.createUser(createUser);
-    return UserDto.fromEntity(persistedUser);
+    return new UserDto(persistedUser);
   }
 
   async getUsers(): Promise<UserDto[]> {
     const users = await this.userRepository.getUsers();
-
-    return users.map((user) => {
-      return UserDto.fromEntity(user);
-    });
+    return users.map((user) => new UserDto(user));
   }
 
-  async getUserByEmail(searchParam: string): Promise<UserDto> {
-    const user: User = await this.userRepository.getUserByEmail(searchParam);
-    return UserDto.fromEntity(user);
+  async getUser(searchParam: string): Promise<UserDto> {
+    const searchObj: any = {
+      id: null,
+      email: null,
+    };
+
+    if (this.validateEmail(searchParam)) {
+      searchObj.email = searchParam;
+    } else {
+      searchObj.id = searchParam;
+    }
+
+    const user: User = await this.userRepository.getUser(searchObj);
+    return new UserDto(user);
   }
 
-  async updateUser(updateUser: UpdateUserDto): Promise<UserDto> {
+  async updateUser(updateUser: Partial<UserDto>): Promise<UserDto> {
     const user = await this.userRepository.updateUser(updateUser);
-    return UserDto.fromEntity(user);
+    return new UserDto(user);
   }
 
-  async login(loginToken: string): Promise<UserDto> {
+  async login(loginToken: string): Promise<LoginDto> {
     loginToken = loginToken.replace(/Basic /, '');
-    const user: User = await this.userRepository.login(loginToken);
-    return UserDto.fromEntity(user);
+    const user = await this.userRepository.login(loginToken);
+    return new LoginDto(user);
   }
 }
