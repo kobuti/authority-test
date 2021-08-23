@@ -27,9 +27,9 @@ Stoping:
 # Credentials
 
 Database:
-  database: authority
-  user: pguserr
-  password: pgpassword
+  - database: authority
+  - user: pguser
+  - password: pgpassword
 
 # Using the Application
   1. The first thing you should do to use the application is register.
